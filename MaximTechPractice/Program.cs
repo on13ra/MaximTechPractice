@@ -22,6 +22,19 @@ else
     output = part1 + part2;
     Console.WriteLine(" Вывод: {0}", output);
 }
+//  метод дерева
+char[] outputArray = output.ToCharArray();
+TreeSort(outputArray, 0, outputArray.Length - 1);
+output = new string(outputArray);
+
+Console.WriteLine(" Отсортированный вывод: {0}", output);
+
+//  быстрая сортировка
+QuickSort(outputArray, 0, outputArray.Length - 1);
+output = new string(outputArray);
+
+Console.WriteLine(" Отсортированный вывод (быстрая сортировка): {0}", output);
+
 //Задание 3 - Помимо обработанной строки, необходимо также возвращать пользователю информацию о том, сколько раз повторялся каждый символ в обработанной строке. 
 var charCounts = output
            .GroupBy(c => c)
@@ -65,6 +78,10 @@ substr = substr.Substring(0, substr.Length - last);
 Console.WriteLine("\n Наибольшая подстрока на гласную: {0}", substr);
 Console.ReadKey();
 
+
+
+
+
 //Задание 2 - Проверка ввода
 static bool AlphabetCheck(string input)
 {
@@ -94,3 +111,74 @@ static bool AlphabetCheck(string input)
     }
     return true;
 }
+
+//Задание 5 - Сортировка
+static void TreeSort(char[] arr, int low, int high)
+{
+    if (low < high)
+    {
+        int pivotIndex = Partition(arr, low, high);
+
+        // Рекурсивно сортируем элементы перед и после разделителя
+        TreeSort(arr, low, pivotIndex - 1);
+        TreeSort(arr, pivotIndex + 1, high);
+    }
+}
+
+// Метод для разделения массива и выбора опорного элемента
+static int Partition(char[] arr, int low, int high)
+{
+    char pivot = arr[high];
+    int i = (low - 1);
+
+    for (int j = low; j <= high - 1; j++)
+        if (arr[j] < pivot)
+        {
+            i++;
+            // Меняем элементы местами
+            char temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+
+
+    char temp1 = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp1;
+
+    return (i + 1);
+}
+// Метод быстрой сортировки
+static void QuickSort(char[] arr, int low, int high)
+{
+    if (low < high)
+    {
+        int pivotIndex = PartitionQuick(arr, low, high);
+
+        QuickSort(arr, low, pivotIndex - 1);
+        QuickSort(arr, pivotIndex + 1, high);
+    }
+}
+
+//разделение массива и выбор опорного элемента
+static int PartitionQuick(char[] arr, int low, int high)
+{
+    char pivot = arr[high];
+    int i = (low - 1);
+
+    for (int j = low; j <= high - 1; j++)
+        if (arr[j] < pivot)
+        {
+            i++;
+            char temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+
+    char temp1 = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp1;
+
+    return (i + 1);
+}
+
