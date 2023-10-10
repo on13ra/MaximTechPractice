@@ -1,4 +1,7 @@
-﻿START:
+﻿using Newtonsoft.Json;
+using System;
+
+START:
 Console.WriteLine("   Введите Cтроку на английском языке в нижнем регистре");
 Console.Write("   ");
 string line = Console.ReadLine();
@@ -7,12 +10,12 @@ bool result = AlphabetCheck(line);
 if (result == false) goto START;
 int length = line.Length;
 char[] parts = line.ToCharArray();
-string output;
+string output; 
 if (line.Length % 2 == 0)
 {
     Array.Reverse(parts, length / 2, length / 2);
     output = new string(parts);
-    Console.WriteLine(" Вывод: {0}", output);
+    Console.WriteLine("  Вывод: {0}", output);
 }
 else
 {
@@ -20,21 +23,10 @@ else
     Array.Reverse(parts);
     string part2 = new string(parts);
     output = part1 + part2;
-    Console.WriteLine(" Вывод: {0}", output);
+    Console.WriteLine("  Вывод: {0}", output);
 }
-//  метод дерева
-char[] outputArray = output.ToCharArray();
-TreeSort(outputArray, 0, outputArray.Length - 1);
-output = new string(outputArray);
 
-Console.WriteLine(" Отсортированный вывод: {0}", output);
-
-//  быстрая сортировка
-QuickSort(outputArray, 0, outputArray.Length - 1);
-output = new string(outputArray);
-
-Console.WriteLine(" Отсортированный вывод (быстрая сортировка): {0}", output);
-
+#region Задание 3 
 //Задание 3 - Помимо обработанной строки, необходимо также возвращать пользователю информацию о том, сколько раз повторялся каждый символ в обработанной строке. 
 var charCounts = output
            .GroupBy(c => c)
@@ -53,7 +45,10 @@ if (charCounts.Any())
         Console.Write($"  {charCount.Character}: {charCount.Count} раз\t");
     }
 }
+   
+#endregion Задание 3 
 
+#region Задание 4
 // Задание 4 - Необходимо найти в обработанной строке наибольшую подстроку, которая начинается и заканчивается на гласную букву из «aeiouy»
 char[] target = "aeiouy".ToCharArray();
 char[] rebuild2 = output.ToCharArray();
@@ -76,13 +71,32 @@ for (int i = 0; i < rebuild2.Length; i++)
 string substr = output.Substring(first);
 substr = substr.Substring(0, substr.Length - last);
 Console.WriteLine("\n Наибольшая подстрока на гласную: {0}", substr);
-Console.ReadKey();
+#endregion Задание 4
 
+#region объявление сортировка 5
+//  метод дерева
+char[] outputArray = output.ToCharArray();
+TreeSort(outputArray, 0, outputArray.Length - 1);
+string output1 = new string(outputArray);
 
+Console.WriteLine(" Отсортированный вывод: {0}", output1);
 
+//  быстрая сортировка
+QuickSort(outputArray, 0, outputArray.Length - 1);
+string output2 = new string(outputArray);
 
+Console.WriteLine(" Отсортированный вывод (быстрая сортировка): {0}", output2);
+#endregion объявление сортировка 5
 
-//Задание 2 - Проверка ввода
+#region задание 6 объяв
+Console.WriteLine();
+int takennum = await TAKE();
+string remchar = output.Remove(takennum - 1, 1);
+Console.WriteLine("  Обработанная строка без одного символа: {0}", remchar);
+Console.WriteLine();
+#endregion задание 6 объяв
+
+#region Задание 2 - Проверка ввода
 static bool AlphabetCheck(string input)
 {
     string alphabet = "abcdefghijklmnopqrstuvwxyz ";
@@ -111,7 +125,9 @@ static bool AlphabetCheck(string input)
     }
     return true;
 }
+#endregion Задание 2 - Проверка ввода
 
+#region Сортировка 5
 //Задание 5 - Сортировка
 static void TreeSort(char[] arr, int low, int high)
 {
@@ -181,4 +197,91 @@ static int PartitionQuick(char[] arr, int low, int high)
 
     return (i + 1);
 }
+#endregion Сортировка 5
 
+
+//Задание 6 
+ async Task<int> TAKE()
+{
+    string apiKey = "5fcfba1d-6d32-455e-a680-adc094214949";
+    int n = 1; // количество чисел
+    int min = 1; // от
+    int max = output.Length; // до
+
+    // запрос жсон-рпц
+    var request = new
+    {
+        jsonrpc = "2.0",
+        method = "generateIntegers",
+        @params = new
+        {
+            apiKey,
+            n,
+            min,
+            max
+        },
+        id = 42 // уникальный ид
+    };
+
+    string requestBody = JsonConvert.SerializeObject(request);
+    try
+    {
+        using (var client = new HttpClient())
+        {
+            Random random = new Random();
+
+            string apiUrl = "https://api.random.org/json-rpc/4/invoke";
+
+            var content = new StringContent(requestBody, System.Text.Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await client.PostAsync(apiUrl, content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseContent = await response.Content.ReadAsStringAsync();
+
+                var jsonResponse = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+                var randomIntegers = jsonResponse.result.random.data[0].ToObject<int>();
+
+                Console.WriteLine("  Random Integers: " + string.Join(", ", randomIntegers));
+                return randomIntegers;
+            }
+            else
+            {
+                // тут отправляется число сгенерированное на клиенте
+                Console.WriteLine("Ошибка подключения: " + response.StatusCode);
+                return random.Next(min, max);
+            }
+
+        }
+    } 
+    catch (Exception ex) 
+    {
+        //  и тут отправляется число сгенерированное на клиенте
+        Random random = new Random();
+        return random.Next(min, max); 
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Console.ReadKey();
