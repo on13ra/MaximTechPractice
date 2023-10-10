@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.ComponentModel.Design;
+using System.Linq;
 
 START:
 Console.WriteLine("   Введите Cтроку на английском языке в нижнем регистре");
@@ -45,7 +47,7 @@ if (charCounts.Any())
         Console.Write($"  {charCount.Character}: {charCount.Count} раз\t");
     }
 }
-   
+   Console.WriteLine    ();
 #endregion Задание 3 
 
 #region Задание 4
@@ -70,11 +72,14 @@ for (int i = 0; i < rebuild2.Length; i++)
     }
 string substr = output.Substring(first);
 substr = substr.Substring(0, substr.Length - last);
-Console.WriteLine("\n Наибольшая подстрока на гласную: {0}", substr);
+for (int i = 0; (i < substr.Length); i++)
+    if (target.Contains(substr[i]))
+    { Console.WriteLine("\n Наибольшая подстрока на гласную: {0}", substr); break; }
+    else { Console.WriteLine("Строка не содержит гласных"); break; }
 #endregion Задание 4
 
 #region объявление сортировка 5
-//  метод дерева
+    //  метод дерева
 char[] outputArray = output.ToCharArray();
 TreeSort(outputArray, 0, outputArray.Length - 1);
 string output1 = new string(outputArray);
