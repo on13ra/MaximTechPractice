@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Security.Cryptography.X509Certificates;
@@ -10,6 +11,13 @@ using System.Security.Cryptography.X509Certificates;
 [ApiController]
 public class ProcessingController : ControllerBase
 {
+    private IConfiguration _configuration;
+
+    public ProcessingController(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
+
     [HttpGet]
     public IActionResult ProcessString(string line)
     {
@@ -22,6 +30,15 @@ public class ProcessingController : ControllerBase
         if (!result)
         {
             return BadRequest("Введите строку на английском языке.");
+        }
+
+        // Чтение чёрного списка из конфигурации
+        List<string> blacklistWords = _configuration.GetSection("Settings:BlackList").Get<List<string>>();
+
+        // Проверка, находится ли введенное слово в чёрном списке
+        if (blacklistWords.Contains(line.ToLower()))
+        {
+            return BadRequest("Слово находится в чёрном списке.");
         }
 
     START:
