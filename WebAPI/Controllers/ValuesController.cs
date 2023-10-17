@@ -1,162 +1,168 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
-using System.Net.Http;
-using Microsoft.Extensions.Configuration;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
+using WebAPI;
 
 [Route("api/processing")]
 [ApiController]
 public class ProcessingController : ControllerBase
 {
-    private IConfiguration _configuration;
+    private readonly RequestLimiter _requestLimiter;
+    private readonly IConfiguration _configuration;
 
-    public ProcessingController(IConfiguration configuration)
+    public ProcessingController(RequestLimiter requestLimiter, IConfiguration configuration)
     {
+        _requestLimiter = requestLimiter;
         _configuration = configuration;
     }
-
     [HttpGet]
-    public IActionResult ProcessString(string line)
+    public async Task<IActionResult> ProcessString(string line)
     {
-        if (string.IsNullOrWhiteSpace(line))
+        // Попытка захвата разрешения для обработки запроса
+        if (await _requestLimiter.TryAcquireAsync())
         {
-            return BadRequest("Введите Строку.");
-        }
+            try
+            {
+                // Ваша обработка запроса
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    return BadRequest("Введите Строку.");
+                }
 
-        bool result = AlphabetCheck(line);
-        if (!result)
-        {
-            return BadRequest("Введите строку на английском языке.");
-        }
+                bool result = AlphabetCheck(line);
+                if (!result)
+                {
+                    return BadRequest("Введите строку на английском языке.");
+                }
 
-        // Чтение чёрного списка из конфигурации
-        List<string> blacklistWords = _configuration.GetSection("Settings:BlackList").Get<List<string>>();
+            START:
+                Console.WriteLine("Введите строку на английском языке в нижнем регистре");
+                Console.Write(" ");
 
-        // Проверка, находится ли введенное слово в чёрном списке
-        if (blacklistWords.Contains(line.ToLower()))
-        {
-            return BadRequest("Слово находится в чёрном списке.");
-        }
+                if (line == null || line.Trim() == "") goto START;
 
-    START:
-        Console.WriteLine("Введите строку на английском языке в нижнем регистре");
-        Console.Write(" ");
+                if (result == false) goto START;
 
-        if (line == null || line.Trim() == "") goto START;
+                int length = line.Length;
+                char[] parts = line.ToCharArray();
+                string output;
+                if (line.Length % 2 == 0)
+                {
+                    Array.Reverse(parts, length / 2, length / 2);
+                    output = new string(parts);
+                    Console.WriteLine("Вывод: {0}", output);
+                }
+                else
+                {
+                    string part1 = new string(parts);
+                    Array.Reverse(parts);
+                    string part2 = new string(parts);
+                    output = part1 + part2;
+                    Console.WriteLine("Вывод: {0}", output);
+                }
 
-        if (result == false) goto START;
+                // Задание 3 - Подсчет повторяющихся символов
+                var charCounts = output
+                .GroupBy(c => c)
+                .Select(g => new
+                {
+                    Character = g.Key,
+                    Count = g.Count()
+                })
+                .Where(x => x.Count > 1);
 
-        int length = line.Length;
-        char[] parts = line.ToCharArray();
-        string output;
-        if (line.Length % 2 == 0)
-        {
-            Array.Reverse(parts, length / 2, length / 2);
-            output = new string(parts);
-            Console.WriteLine("Вывод: {0}", output);
+                if (charCounts.Any())
+                {
+                    Console.WriteLine("Повторяющиеся символы и их количество:");
+                    foreach (var charCount in charCounts)
+                    {
+                        Console.Write($"{charCount.Character}: {charCount.Count} раз\t");
+                    }
+                    Console.WriteLine();
+                }
+
+                // Задание 4 - Наибольшая подстрока с гласными
+                char[] target = "aeiouy".ToCharArray();
+                char[] rebuild2 = output.ToCharArray();
+                char[] rebuild2Rev = output.ToCharArray();
+                Array.Reverse(rebuild2Rev);
+                int first = 0;
+                int last = 0;
+                for (int i = 0; i < rebuild2.Length; i++)
+                {
+                    if (target.Contains(rebuild2[i]))
+                    {
+                        first += i;
+                        break;
+                    }
+                }
+                for (int i = 0; i < rebuild2.Length; i++)
+                {
+                    if (target.Contains(rebuild2Rev[i]))
+                    {
+                        last += i;
+                        break;
+                    }
+                }
+                string substr = output.Substring(first);
+                substr = substr.Substring(0, substr.Length - last);
+                for (int i = 0; i < substr.Length; i++)
+                {
+                    if (target.Contains(substr[i]))
+                    {
+                        Console.WriteLine("\nНаибольшая подстрока на гласную: {0}", substr);
+                        break;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Строка не содержит гласных");
+                        substr = "undefined";
+                        break;
+                    }
+                }
+
+                // Задание 5 - Сортировка
+                char[] outputArray = output.ToCharArray();
+                TreeSort(outputArray, 0, outputArray.Length - 1);
+                string output1 = new string(outputArray);
+                Console.WriteLine("Отсортированный вывод: {0}", output1);
+
+                // Быстрая сортировка
+                QuickSort(outputArray, 0, outputArray.Length - 1);
+                string output2 = new string(outputArray);
+                Console.WriteLine("Отсортированный вывод (быстрая сортировка): {0}", output2);
+
+                // Задание 6 - Обработка и возврат строки без одного символа
+                string remchar = await TAKE(output);
+                Console.WriteLine();
+                Console.WriteLine("Обработанная строка без одного символа: {0}", remchar);
+                Console.WriteLine();
+
+                return Ok(new
+                {
+                    Вывод = output,
+                    Повторяющиеся_символы = charCounts,
+                    Наибольшая_подстрока_на_гласную = substr,
+                    Сортировка = new
+                    {
+                        Деревом = output1,
+                        Быстрая = output2
+                    },
+                    Строка_без_одного_символа_API = remchar
+                });
+            }
+            finally
+            {
+                // Важно освободить разрешение после обработки запроса
+                _requestLimiter.Release();
+            }
         }
         else
         {
-            string part1 = new string(parts);
-            Array.Reverse(parts);
-            string part2 = new string(parts);
-            output = part1 + part2;
-            Console.WriteLine("Вывод: {0}", output);
+            // HTTP 503 Service Unavailable, так как достигнут лимит параллельных запросов
+            return StatusCode(503, "Service Unavailable");
         }
-
-        // Задание 3 - Подсчет повторяющихся символов
-        var charCounts = output
-        .GroupBy(c => c)
-        .Select(g => new
-        {
-            Character = g.Key,
-            Count = g.Count()
-        })
-        .Where(x => x.Count > 1);
-
-        if (charCounts.Any())
-        {
-            Console.WriteLine("Повторяющиеся символы и их количество:");
-            foreach (var charCount in charCounts)
-            {
-                Console.Write($"{charCount.Character}: {charCount.Count} раз\t");
-            }
-            Console.WriteLine();
-        }
-
-        // Задание 4 - Наибольшая подстрока с гласными
-        char[] target = "aeiouy".ToCharArray();
-        char[] rebuild2 = output.ToCharArray();
-        char[] rebuild2Rev = output.ToCharArray();
-        Array.Reverse(rebuild2Rev);
-        int first = 0;
-        int last = 0;
-        for (int i = 0; i < rebuild2.Length; i++)
-        {
-            if (target.Contains(rebuild2[i]))
-            {
-                first += i;
-                break;
-            }
-        }
-        for (int i = 0; i < rebuild2.Length; i++)
-        {
-            if (target.Contains(rebuild2Rev[i]))
-            {
-                last += i;
-                break;
-            }
-        }
-        string substr = output.Substring(first);
-        substr = substr.Substring(0, substr.Length - last);
-        for (int i = 0; i < substr.Length; i++)
-        {
-            if (target.Contains(substr[i]))
-            {
-                Console.WriteLine("\nНаибольшая подстрока на гласную: {0}", substr);
-                break;
-            }
-            else
-            {
-                Console.WriteLine("Строка не содержит гласных");
-                substr = "undefined";
-                break;
-            }
-        }
-
-        // Задание 5 - Сортировка
-        char[] outputArray = output.ToCharArray();
-        TreeSort(outputArray, 0, outputArray.Length - 1);
-        string output1 = new string(outputArray);
-        Console.WriteLine("Отсортированный вывод: {0}", output1);
-
-        // Быстрая сортировка
-        QuickSort(outputArray, 0, outputArray.Length - 1);
-        string output2 = new string(outputArray);
-        Console.WriteLine("Отсортированный вывод (быстрая сортировка): {0}", output2);
-
-        // Задание 6 - Обработка и возврат строки без одного символа
-        string remchar = TAKE(output).Result;
-        Console.WriteLine();
-        Console.WriteLine("Обработанная строка без одного символа: {0}", remchar);
-        Console.WriteLine();
-
-        return Ok(new
-        {
-            Вывод = output,
-            Повторяющиеся_символы = charCounts,
-            Наибольшая_подстрока_на_гласную = substr,
-            Сортировка = new
-            {
-                Деревом = output1,
-                Быстрая = output2
-            },
-            Строка_без_одного_символа_API = remchar
-        });
     }
+
 
     // Задание 2 - Проверка ввода
     static bool AlphabetCheck(string input)
