@@ -6,8 +6,8 @@ using WebAPI;
 [ApiController]
 public class ProcessingController : ControllerBase
 {
-    private readonly RequestLimiter _requestLimiter;
-    private readonly IConfiguration _configuration;
+    public readonly RequestLimiter _requestLimiter;
+    public readonly IConfiguration _configuration;
 
     public ProcessingController(RequestLimiter requestLimiter, IConfiguration configuration)
     {
@@ -33,7 +33,7 @@ public class ProcessingController : ControllerBase
                 {
                     return BadRequest("Введите строку на английском языке.");
                 }
-
+            #region ввод
             START:
                 Console.WriteLine("Введите строку на английском языке в нижнем регистре");
                 Console.Write(" ");
@@ -59,7 +59,7 @@ public class ProcessingController : ControllerBase
                     output = part1 + part2;
                     Console.WriteLine("Вывод: {0}", output);
                 }
-
+                #endregion ввод
                 // Задание 3 - Подсчет повторяющихся символов
                 var charCounts = output
                 .GroupBy(c => c)
@@ -165,7 +165,7 @@ public class ProcessingController : ControllerBase
 
 
     // Задание 2 - Проверка ввода
-    static bool AlphabetCheck(string input)
+    public static bool AlphabetCheck(string input)
     {
         string alphabet = "abcdefghijklmnopqrstuvwxyz ";
         input = input.ToLower();
@@ -195,7 +195,7 @@ public class ProcessingController : ControllerBase
     }
 
     // Задание 5 - Сортировка
-    static void TreeSort(char[] arr, int low, int high)
+    public static void TreeSort(char[] arr, int low, int high)
     {
         if (low < high)
         {
@@ -209,7 +209,7 @@ public class ProcessingController : ControllerBase
     }
 
     // Метод для разделения массива и выбора опорного элемента
-    static int Partition(char[] arr, int low, int high)
+    public static int Partition(char[] arr, int low, int high)
     {
         char pivot = arr[high];
         int i = (low - 1);
@@ -234,7 +234,7 @@ public class ProcessingController : ControllerBase
     }
 
     // Метод быстрой сортировки
-    static void QuickSort(char[] arr, int low, int high)
+    public static void QuickSort(char[] arr, int low, int high)
     {
         if (low < high)
         {
@@ -245,7 +245,7 @@ public class ProcessingController : ControllerBase
     }
 
     // Разделение массива и выбор опорного элемента
-    static int PartitionQuick(char[] arr, int low, int high)
+    public static int PartitionQuick(char[] arr, int low, int high)
     {
         char pivot = arr[high];
         int i = (low - 1);
